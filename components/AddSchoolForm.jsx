@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { put } from "@vercel/blob";
 
 export default function AddSchoolForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const token = process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN;
 
   const {
     register,
@@ -17,27 +19,46 @@ export default function AddSchoolForm() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitMessage("");
-
     try {
       let imageName = "";
 
-      // Upload image if provided
       if (data.image && data.image[0]) {
-        const formData = new FormData();
-        formData.append("image", data.image[0]);
-
-        console.log("---formdata", formData);
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
+        // Upload file to Vercel Blob
+        const file = data.image[0];
+        const { url } = await put(file.name, file, {
+          access: "public",
+          token: token,
         });
 
-        const uploadResult = await uploadRes.json();
-        console.log("--->>>>Upload", uploadResult);
-        if (uploadResult.success) {
-          imageName = uploadResult.filename;
-        }
+        imageName = url; // This is the permanent public URL
       }
+
+      // Upload image if provided
+      // if (data.image && data.image[0]) {
+      //   const formData = new FormData();
+      //   formData.append("image", data.image[0]);
+
+      //   const { url } = await put(
+      //     formData.image,
+      //     `${formData.image.name}-${Date.now()}`,
+      //     {
+      //       access: "public",
+      //     }
+      //   );
+
+      //   imageName = url;
+
+      //   // const uploadRes = await fetch("/api/upload", {
+      //   //   method: "POST",
+      //   //   body: formData,
+      //   // });
+
+      //   // const uploadResult = await uploadRes.json();
+
+      //   // if (uploadResult.success) {
+      //   //   imageName = uploadResult.filename;
+      //   // }
+      // }
 
       // Submit school data
       const schoolData = {
@@ -49,6 +70,8 @@ export default function AddSchoolForm() {
         email: data.email,
         image: imageName,
       };
+
+      console.log(schoolData);
 
       const response = await fetch("/api/schools", {
         method: "POST",

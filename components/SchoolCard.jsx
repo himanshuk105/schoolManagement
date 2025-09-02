@@ -6,7 +6,7 @@ export default function SchoolCard({ school, handleDelete }) {
       <div className="relative h-48 bg-gray-200">
         {school.image ? (
           <Image
-            src={`/${school.image}`}
+            src={`${school.image}`}
             alt={school.name}
             fill
             className="object-cover"
