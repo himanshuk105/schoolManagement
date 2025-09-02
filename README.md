@@ -1,4 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# School Management System
+
+This is a full-stack web application for managing and displaying school information, built with [Next.js](https://nextjs.org), React, and MySQL.
+
+## Features
+
+- Add new schools with details (name, address, city, state, contact, email, image)
+- View a directory of all schools
+- Delete schools from the directory
+- Upload and display school images
+- Responsive, modern UI with Tailwind CSS
+
+## Tech Stack
+
+- **Frontend:** Next.js (App Router), React, Tailwind CSS
+- **Backend:** Next.js API routes
+- **Database:** MySQL
+- **ORM/DB:** mysql2 (direct SQL queries)
+
+## Database Schema
+
+```
+CREATE TABLE schools (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name TEXT NOT NULL,
+  address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  contact VARCHAR(15) NOT NULL,
+  image TEXT,
+  email VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Getting Started
+
+1. **Clone the repository**
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Set up your `.env` file** with your MySQL credentials:
+   ```env
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_USER=your_mysql_user
+   DB_PASSWORD=your_mysql_password
+   DB_NAME=school_management
+   ```
+4. **Create the database and table** using the schema above.
+5. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+- `app/` — Next.js app directory (pages, API routes)
+- `components/` — React components (forms, navigation, cards)
+- `lib/db.js` — MySQL connection pool
+- `public/` — Static files and uploaded images
+- `database.sql` — Database schema
+
+## Main Screens
+
+- **Home:** Project overview
+- **Add School:** Form to add a new school
+- **View Schools:** List and manage all schools
+
+## API Endpoints
+
+- `POST /api/schools` — Add a new school
+- `GET /api/schools` — List schools (with pagination)
+- `DELETE /api/schools?id=ID` — Delete a school
+- `POST /api/upload` — Upload school image
+
+## License
+
+MIT
 
 ## Getting Started
 
