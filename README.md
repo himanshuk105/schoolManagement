@@ -4,17 +4,30 @@ This is a full-stack web application for managing and displaying school informat
 
 ## Features
 
+- **OTP Authentication:** Secure email-based login with 6-digit OTP (10-minute expiry)
+- **Protected Routes:** Only authenticated users can add/manage schools
+- **Public Viewing:** Anyone can view the school directory
 - Add new schools with details (name, address, city, state, contact, email, image)
 - View a directory of all schools
 - Delete schools from the directory
 - Upload and display school images
 - Responsive, modern UI with Tailwind CSS
 
+## Authentication Flow
+
+1. User enters email on login page
+2. System sends 6-digit OTP via Resend email service
+3. User enters OTP to verify and get authenticated
+4. JWT token stored in httpOnly cookie (7-day expiry)
+5. Middleware protects routes like `/add-school`
+
 ## Tech Stack
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS
 - **Backend:** Next.js API routes
 - **Database:** MySQL
+- **Authentication:** JWT with OTP verification
+- **Email:** Resend API
 - **ORM/DB:** mysql2 (direct SQL queries)
 
 ## Database Schema

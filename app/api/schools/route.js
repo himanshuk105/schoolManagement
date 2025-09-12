@@ -79,12 +79,39 @@ export async function DELETE(request) {
       );
     }
 
-    console.log(rows);
     return NextResponse.json({ success: true, rows: rows }, { status: 200 });
   } catch (error) {
     console.error("Error in DB Connection:", error);
     return NextResponse.json(
       { success: false, error: "Fetching Failed" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+
+    const { name, address, city, state, contact, image, email, id } = body;
+
+    const [rows] = await db.execute(
+      `UPDATE schools SET name=?, address=?, city=?, state=?, contact=?, email=?, image=? WHERE id=?`,
+      [name, address, city, state, contact, email, image, id]
+    );
+
+    if (rows.affectedRows === 0) {
+      return NextResponse.json(
+        { success: false, error: "School not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, rows }, { status: 200 });
+  } catch (error) {
+    console.error("Error in DB:", error);
+    return NextResponse.json(
+      { success: false, error: "Update Failed" },
       { status: 500 }
     );
   }

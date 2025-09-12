@@ -1,20 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { put } from "@vercel/blob";
 
-export default function AddSchoolForm() {
+export default function AddSchoolForm({ edit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
   const token = process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN;
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm();
+
+  // Watch for image file changes
+  const watchedImage = watch("image");
+
+  useEffect(() => {
+    if (edit) {
+      reset({
+        name: edit.name || "",
+        address: edit.address || "",
+        city: edit.city || "",
+        state: edit.state || "",
+        contact: edit.contact || "",
+        email: edit.email || "",
+        image: edit.image || "",
+      });
+
+      // Set existing image preview if editing
+      if (edit.image) {
+        setImagePreview(edit.image);
+      }
+    }
+  }, [edit, reset]);
+
+  // Handle image preview when file is selected
+  useEffect(() => {
+    if (watchedImage && typeof watchedImage != "string" && watchedImage[0]) {
+      const file = watchedImage[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+
+      reader.readAsDataURL(file);
+    }
+  }, [watchedImage]);
+
+  const removeImage = () => {
+    setImagePreview("");
+    // Reset the file input
+    const fileInput = document.getElementById("image");
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -22,7 +69,7 @@ export default function AddSchoolForm() {
     try {
       let imageName = "";
 
-      if (data.image && data.image[0]) {
+      if (data.image && data.image[0] && typeof data.image !== "string") {
         // Upload file to Vercel Blob
         const file = data.image[0];
         const { url } = await put(file.name, file, {
@@ -31,36 +78,11 @@ export default function AddSchoolForm() {
         });
 
         imageName = url; // This is the permanent public URL
+      } else if (edit && edit.image && imagePreview === edit.image) {
+        // Keep existing image if no new image is selected and we're editing
+        imageName = edit.image;
       }
 
-      // Upload image if provided
-      // if (data.image && data.image[0]) {
-      //   const formData = new FormData();
-      //   formData.append("image", data.image[0]);
-
-      //   const { url } = await put(
-      //     formData.image,
-      //     `${formData.image.name}-${Date.now()}`,
-      //     {
-      //       access: "public",
-      //     }
-      //   );
-
-      //   imageName = url;
-
-      //   // const uploadRes = await fetch("/api/upload", {
-      //   //   method: "POST",
-      //   //   body: formData,
-      //   // });
-
-      //   // const uploadResult = await uploadRes.json();
-
-      //   // if (uploadResult.success) {
-      //   //   imageName = uploadResult.filename;
-      //   // }
-      // }
-
-      // Submit school data
       const schoolData = {
         name: data.name,
         address: data.address,
@@ -71,27 +93,37 @@ export default function AddSchoolForm() {
         image: imageName,
       };
 
-      console.log(schoolData);
-
       const response = await fetch("/api/schools", {
-        method: "POST",
+        method: edit ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(schoolData),
+        body: JSON.stringify(
+          edit ? { ...schoolData, id: edit.id } : schoolData
+        ),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setSubmitMessage("School added successfully!");
-        reset();
+        setSubmitMessage(`School ${edit ? "updated" : "added"} successfully!`);
+        if (!edit) {
+          reset();
+          setImagePreview("");
+        }
+        setTimeout(() => {
+          window.location.href = "/show-schools";
+        }, 50);
       } else {
-        setSubmitMessage("Error adding school. Please try again.");
+        setSubmitMessage(
+          `Error ${edit ? "updating" : "adding"} school. Please try again.`
+        );
       }
     } catch (error) {
       console.error("Submit error:", error);
-      setSubmitMessage("Error adding school. Please try again.");
+      setSubmitMessage(
+        `Error ${edit ? "updating" : "adding"} school. Please try again.`
+      );
     }
 
     setIsSubmitting(false);
@@ -99,7 +131,9 @@ export default function AddSchoolForm() {
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New School</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        {edit ? "Edit School" : "Add New School"}
+      </h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
@@ -260,6 +294,32 @@ export default function AddSchoolForm() {
             {...register("image")}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mt-4">
+              <div className="relative inline-block">
+                <img
+                  src={imagePreview}
+                  alt="School preview"
+                  className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  title="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                {edit && imagePreview === edit.image
+                  ? "Current image"
+                  : "Selected image"}
+              </p>
+            </div>
+          )}
         </div>
 
         <button
@@ -267,7 +327,9 @@ export default function AddSchoolForm() {
           disabled={isSubmitting}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isSubmitting ? "Adding School..." : "Add School"}
+          {isSubmitting
+            ? `${edit ? "Updating" : "Adding"} School...`
+            : `${edit ? "Update" : "Add"} School`}
         </button>
 
         {submitMessage && (

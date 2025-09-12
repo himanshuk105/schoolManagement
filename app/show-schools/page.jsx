@@ -1,6 +1,7 @@
 "use client";
 
 import SchoolCard from "@/components/SchoolCard";
+import { checkAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
@@ -9,6 +10,7 @@ export default function ShowSchoolsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sync, setSync] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
 
   const handleDelete = async (id) => {
     try {
@@ -41,10 +43,15 @@ export default function ShowSchoolsPage() {
       );
       const result = await response.json();
 
-      console.log(result);
-
       if (result.success) {
         setSchools(result.data);
+        const check = await checkAuth();
+
+        if (check) {
+          setAuthenticated(true);
+        } else {
+          setAuthenticated(false);
+        }
       } else {
         setError("Failed to fetch schools");
       }
@@ -107,6 +114,7 @@ export default function ShowSchoolsPage() {
               key={school.id}
               school={school}
               handleDelete={handleDelete}
+              authenticated={authenticated}
             />
           ))}
         </div>
